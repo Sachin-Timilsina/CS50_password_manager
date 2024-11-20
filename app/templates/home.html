@@ -5,9 +5,15 @@
 {% block content %}
     <div class="row justify-content-center my-5">
         <div class="col-md-8 col-lg-6 text-center">
-            <h1 class="display-4 mb-4 text-primary fw-bold">Your Secure Place for All Your Passwords</h1>
-            <p class="lead mb-4 text-muted">Manage and protect your sensitive information securely and easily with our password manager.</p>
-            <button class="btn btn-primary btn-lg shadow-sm">Get Started</button>
+            <h1 class="display-4 mb-4 text-primary fw-bold">
+                Your Secure Place for All Your Passwords
+            </h1>
+            <p class="lead mb-4 text-muted">
+                Manage and protect your sensitive information securely and easily with our password manager.
+            </p>
+            <a class="btn btn-primary btn-lg shadow-sm" href="{{ url_for('signup') }}" aria-label="Visit the Sign Up page">
+                Get Started
+            </a>
         </div>
     </div>
 {% endblock %}

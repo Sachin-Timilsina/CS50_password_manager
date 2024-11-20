@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Create an Account - Password Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center my-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="text-center mb-3">Create an Account</h2>
+                <p class="text-end"><a href="{{ url_for('login') }}">or Log In</a></p>
+                <form method="POST" action="{{ url_for('signup') }}">
+                    <!-- Email Input with Floating Label -->
+                    <div class="form-floating mb-3">
+                        <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required>
+                        <label for="email">Email address</label>
+                    </div>
+
+                    <!-- Master Password with Floating Label -->
+                    <div class="form-floating mb-3 position-relative">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                        <label for="password">Master Password</label>
+                        <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-50 translate-middle-y" id="toggle-password" onclick="togglePassword()">
+                            <i class="bi bi-eye" id="eye-icon"></i>
+                        </button>
+                    </div>
+
+                    <!-- Confirm Password with Floating Label -->
+                    <div class="form-floating mb-3 position-relative">
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
+                        <label for="confirm_password">Confirm Master Password</label>
+                        <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-50 translate-middle-y" id="toggle-confirm-password" onclick="toggleConfirmPassword()">
+                            <i class="bi bi-eye" id="confirm-eye-icon"></i>
+                        </button>
+                    </div>
+
+                    <!-- Sign Up Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Sign Up - It's Free</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
