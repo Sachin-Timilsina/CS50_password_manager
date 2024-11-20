@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ error_code }}{% endblock %}
+
+{% block content %}
+<div class="container text-center my-5">
+    <img src="{{ url_for('static', filename='error_image.jpg') }}" alt="Error AI Generate Image" class="img-fluid" style="max-width: 300px; margin-bottom: 20px;">
+    <h1 class="display-4 text-danger">Oops! Error {{ error_code }}</h1>
+    <p class="lead text-muted mb-4">{{ error_message }}</p>
+    <p>
+        <!-- Go one step back-->
+        <button onclick="goBack()" class="btn btn-secondary btn-lg">Go Back</button>
+    </p>
+</div>
+{% endblock %}

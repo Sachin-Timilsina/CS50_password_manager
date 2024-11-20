@@ -25,6 +25,13 @@
                         </button>
                     </div>
 
+                    <!-- Password Validation Messages -->
+                    <div id="password-feedback" class="form-text mt-2">
+                        <ul id="password-strength-messages" class="list-unstyled">
+                            <!-- Validation messages will be populated here -->
+                        </ul>
+                    </div>
+
                     <!-- Confirm Password with Floating Label -->
                     <div class="form-floating mb-3 position-relative">
                         <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
@@ -43,4 +50,5 @@
         </div>
     </div>
 </div>
+</script>
 {% endblock %}

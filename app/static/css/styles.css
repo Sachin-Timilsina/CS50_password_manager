@@ -66,3 +66,39 @@ footer {
 .input-group button {
     border: none;
 }
+
+/* Style for password validation messages */
+#password-feedback {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: #dc3545;
+}
+
+#password-feedback ul {
+    padding-left: 0;
+}
+
+#password-feedback ul li {
+    list-style-type: none;
+    font-size: 14px;
+}
+
+#password-feedback .valid {
+    color: #28a745;
+}
+
+#password-feedback .invalid {
+    color: #dc3545;
+}
+
+.text-danger {
+    color: #dc3545 ;
+}
+
+.text-success {
+    color: #28a745 ;
+}
+
+.text-muted {
+    color: #6c757d ;
+}
