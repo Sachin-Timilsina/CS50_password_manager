@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Form Section -->
+    <div class="row mb-4">
+        <div class="col-md-6 offset-md-3">
+            <form id="password-form">
+                <div class="mb-3">
+                    <label for="website-url" class="form-label">Website URL</label>
+                    <input type="url" class="form-control" id="website-url" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-secondary" id="generate-password">Generate Password</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-striped table-bordered" id="password-table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Website URL</th>
+                        <th>Password</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be dynamically added here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for generating password and toggling visibility -->
+<script>
+    document.getElementById('generate-password').addEventListener('click', function() {
+        const password = generateRandomPassword();
+        document.getElementById('password').value = password;
+    });
+
+    document.getElementById('password-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const websiteUrl = document.getElementById('website-url').value;
+        const password = document.getElementById('password').value;
+
+        // Add new row to the table
+        const table = document.getElementById('password-table').getElementsByTagName('tbody')[0];
+        const newRow = table.insertRow();
+
+        const websiteCell = newRow.insertCell(0);
+        websiteCell.textContent = websiteUrl;
+
+        const passwordCell = newRow.insertCell(1);
+        const passwordText = document.createElement('span');
+        passwordText.textContent = password;
+        passwordText.classList.add('password-text');
+        passwordCell.appendChild(passwordText);
+
+        // Add visibility toggle button
+        const visibilityButton = document.createElement('button');
+        visibilityButton.classList.add('btn', 'btn-info', 'btn-sm');
+        visibilityButton.textContent = 'Toggle Visibility';
+        visibilityButton.onclick = function() {
+            if (passwordText.style.display === 'none') {
+                passwordText.style.display = 'inline';
+            } else {
+                passwordText.style.display = 'none';
+            }
+        };
+        passwordCell.appendChild(visibilityButton);
+
+        // Add delete button
+        const deleteButtonCell = newRow.insertCell(2);
+        const deleteButton = document.createElement('button');
+        deleteButton.classList.add('btn', 'btn-danger', 'btn-sm');
+        deleteButton.textContent = 'Delete';
+        deleteButton.onclick = function() {
+            newRow.remove();
+        };
+        deleteButtonCell.appendChild(deleteButton);
+
+        // Clear the form
+        document.getElementById('website-url').value = '';
+        document.getElementById('password').value = '';
+    });
+
+    function generateRandomPassword() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+        let password = '';
+        for (let i = 0; i < 12; i++) {
+            const randomIndex = Math.floor(Math.random() * chars.length);
+            password += chars[randomIndex];
+        }
+        return password;
+    }
+</script>
+
+{% endblock %}

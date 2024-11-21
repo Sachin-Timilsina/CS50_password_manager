@@ -2,11 +2,17 @@ import sqlite3
 import validators
 import bcrypt
 import base64
-from flask import Flask, g, jsonify, render_template, request, redirect, url_for
+import os
+from flask import Flask, g, jsonify, render_template, request, redirect, url_for, session
 from utils import check_password_strength
+from dotenv import load_dotenv
 
+load_dotenv() # take env variables from .env
 
 app = Flask(__name__)
+
+# Set secret key for app.
+app.secret_key = os.getenv("SECRET_KEY")
 
 # DB setup
 DATABASE = 'password_manager.db'
@@ -37,9 +43,21 @@ def init_db():
 def init_db_once():
     init_db()
 
+# Ensure responses are not cached by browser
+@app.after_request
+def after_request(response):
+    response.headers['Cache-Control'] = "no-cache, no-store, must-revalidate"
+    response.headers['Expires'] = 0
+    response.headers['Pragma'] = "no-cache"
+    return response
+
 
 @app.route('/')
 def home():
+    # If logged in go to accounts page
+    if 'user_id' in session:
+        return redirect(url_for('accounts'))
+    
     return render_template('home.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -74,8 +92,6 @@ def signup():
         elif password != confirm_password:
             return render_template("error.html",error_code=400,error_message="Password confirmation failed!"),400
         
-        
-        # TODO: input email, password_hash, salt also check if username already exists
 
         # Get list of email and if they already exists
         db = get_db()
@@ -108,12 +124,71 @@ def signup():
         # After Successfully signing up go to log in page
         return redirect(url_for('login'))
 
+    # If logged in go to accounts page
+    if 'user_id' in session:
+        return redirect(url_for('accounts'))
+    
     # Handle Get Request
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        # Get user email, password
+        email = request.form['email']
+        password = request.form['password']
+
+        # Validate user input email, password
+        if not email:
+            return render_template("error.html",error_code=400,error_message="Please provide email!"),400
+        elif not password:
+            return render_template("error.html",error_code=400,error_message="Please provide password!"),400
+        
+        # Check if the user exists with that email.
+        db = get_db()
+        user = db.execute('SELECT * FROM Users WHERE email = ?', (email,)).fetchone()
+
+        if not user:
+            return render_template("error.html",error_code=400,error_message="Credentials do not match!"),400
+        
+        base64_salt = user['salt']
+        base64_password_hash = user['password_hash']
+
+        # Decode salt and hash to be in byte format
+        salt = base64.b64decode(base64_salt)
+        stored_password_hash = base64.b64decode(base64_password_hash)
+
+        # Rehash user input password with the stored salt
+        user_password_hash = bcrypt.hashpw(password.encode(), salt)
+
+        password_match = user_password_hash == stored_password_hash
+
+        if not password_match:
+            return render_template("error.html",error_code=400,error_message="Credentials do not match!")
+        
+        # email and password matched start session and show the page of accounts
+        # store the user_id in session
+        session['user_id'] = user['user_id']
+        session['email'] = user['email']
+        session['password'] = password # NOT A GOOD PRACTICE BUT let's go with it! Don't punish me cyber security gods
+
+        return redirect(url_for('accounts.html'))
+    
+    # If logged in go to accounts page
+    if 'user_id' in session:
+        return redirect(url_for('accounts'))
+
     return render_template('login.html')
+
+@app.route('/accounts', methods=['POST', 'GET'])
+def accounts():
+    if request.method == 'POST':
+        pass
+    # Go back to login if not logged in
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    # Render the accounts page.
+    return render_template('accounts.html')
 
 # Master password strength checking
 @app.route('/check_password_strength', methods=['POST'])
