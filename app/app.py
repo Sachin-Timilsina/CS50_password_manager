@@ -1,6 +1,10 @@
 import sqlite3
-from flask import Flask, g, jsonify, render_template, request
+import validators
+import bcrypt
+import base64
+from flask import Flask, g, jsonify, render_template, request, redirect, url_for
 from utils import check_password_strength
+
 
 app = Flask(__name__)
 
@@ -26,10 +30,11 @@ def init_db():
         db = get_db()
         with open('schema.sql', 'r') as f:
             db.executescript(f.read())
+        db.commit()
 
 # Route to create the tables on the first run
 @app.before_request
-def before_request():
+def init_db_once():
     init_db()
 
 
@@ -39,6 +44,7 @@ def home():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+
     if request.method == 'POST':
         # Get user email, password, confirm_password
         email = request.form['email']
@@ -47,9 +53,12 @@ def signup():
 
         # Validate user input email, password
         if not email:
-            return render_template("error.html",error_code=400,error_message="Please provide email!",),400
+            return render_template("error.html",error_code=400,error_message="Please provide email!"),400
+        # Valid email
+        elif not validators.email(email):
+            return render_template("error.html", error_code=400,error_message="Please provide valid email!"),400
         elif not password:
-            return render_template("error.html",error_code=400,error_message="Please provide password!",),400
+            return render_template("error.html",error_code=400,error_message="Please provide password!"),400
         # Check if strong password
         elif len(password) < 8:
             return render_template("error.html",error_code=400,error_message="Password should be at least 8 characters."),400
@@ -63,10 +72,42 @@ def signup():
             return render_template("error.html",error_code=400,error_message="Password should contain at least 1 special character"),400
         # Check password and confirm_password is same
         elif password != confirm_password:
-            return render_template("error.html",error_code=400,error_message="Password confirmation failed!",),400
+            return render_template("error.html",error_code=400,error_message="Password confirmation failed!"),400
         
-        # Input user email and hashed master password in db.
-        # TODO: 
+        
+        # TODO: input email, password_hash, salt also check if username already exists
+
+        # Get list of email and if they already exists
+        db = get_db()
+        users = db.execute('SELECT email FROM Users').fetchall()
+
+        # Convert rows to list of dictionaries
+        users_list = [dict(user) for user in users]
+
+        # Check if the email is already associated with the user
+        for user in users_list:
+            if user['email'] == email:
+                return render_template('error.html',error_code=400,error_message="User already exists!"),400
+            
+        
+        # Generate salt for hashing
+        salt = bcrypt.gensalt()
+        password_hash = bcrypt.hashpw(password.encode(), salt)
+
+        # Input data into table (Ready salt and password hash as strings)
+        salt = base64.b64encode(salt).decode()
+        password_hash = base64.b64encode(password_hash).decode()
+        
+        # Insert new user into users table
+        db.execute(
+            'INSERT INTO Users (email, password_hash, salt) VALUES(?, ?, ?)',
+            [email, password_hash, salt]
+        )
+        db.commit()
+
+        # After Successfully signing up go to log in page
+        return redirect(url_for('login'))
+
     # Handle Get Request
     return render_template('signup.html')
 
