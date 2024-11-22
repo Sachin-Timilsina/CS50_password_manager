@@ -4,7 +4,7 @@ import bcrypt
 import base64
 import os
 from flask import Flask, g, jsonify, render_template, request, redirect, url_for, session
-from utils import check_password_strength, encrypt_password, decrypt_password
+from utils import check_password_strength, derive_session_key, encrypt_password, decrypt_password
 from dotenv import load_dotenv
 
 load_dotenv() # take env variables from .env
@@ -133,48 +133,37 @@ def signup():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     # If logged in go to accounts page
-    if 'user_id' in session:
+    if 'user_id' in session and 'session_key' in session:
         return redirect(url_for('accounts'))
     
     if request.method == 'POST':
-        # Get user email, password
         email = request.form['email']
         password = request.form['password']
 
-        # Validate user input email, password
-        if not email:
-            return render_template("error.html",error_code=400,error_message="Please provide email!"),400
-        elif not password:
-            return render_template("error.html",error_code=400,error_message="Please provide password!"),400
-        
-        # Check if the user exists with that email.
+        # If empty fields inputted 
+        if not email or not password:
+            return render_template("error.html", error_code=400, error_message="Please provide email and password!"), 400
+
+        # Check if user email is correct
         db = get_db()
         user = db.execute('SELECT * FROM Users WHERE email = ?', (email,)).fetchone()
 
         if not user:
-            return render_template("error.html",error_code=400,error_message="Credentials do not match!"),400
-        
-        base64_salt = user['salt']
-        base64_password_hash = user['password_hash']
+            return render_template("error.html", error_code=400, error_message="Credentials do not match!"), 400
 
-        # Decode salt and hash to be in byte format
-        salt = base64.b64decode(base64_salt)
-        stored_password_hash = base64.b64decode(base64_password_hash)
+        salt = base64.b64decode(user['salt'])
+        stored_password_hash = base64.b64decode(user['password_hash'])
 
-        # Rehash user input password with the stored salt
+        # Verify password
         user_password_hash = bcrypt.hashpw(password.encode(), salt)
+        if user_password_hash != stored_password_hash:
+            return render_template("error.html", error_code=400, error_message="Credentials do not match!"), 400
 
-        password_match = user_password_hash == stored_password_hash
-
-        if not password_match:
-            return render_template("error.html",error_code=400,error_message="Credentials do not match!")
-        
-        # email and password matched start session and show the page of accounts
-        # store the user_id in session
+        # Derive a session key and store it in the session
+        session_key = derive_session_key(password, salt)
         session['user_id'] = user['user_id']
         session['email'] = user['email']
-        session['password'] = password # NOT A GOOD PRACTICE BUT let's go with it! Don't punish me cyber security gods
-        session['salt'] = salt # ALSO NOT A GOOD PRACTICE !
+        session['session_key'] = base64.b64encode(session_key).decode()  # Store as base64 string
 
         return redirect(url_for('accounts'))
 
@@ -182,53 +171,42 @@ def login():
 
 @app.route('/accounts', methods=['POST', 'GET'])
 def accounts():
-    # Go back to login if not logged in
-    if 'user_id' not in session:
+    # If not logged in go back to login
+    if 'user_id' not in session or 'session_key' not in session:
         return redirect(url_for('login'))
     
+    # Get session key
+    session_key = base64.b64decode(session['session_key'])
+
     if request.method == 'POST':
-        # Get the user inputted web url and password
         web_url = request.form['website-url']
         password = request.form['password']
 
-        # Get encrypted password and IV
-        encrypted_password, iv = encrypt_password(session["password"], session["salt"], password)
-        print(encrypted_password, iv)
+        encrypted_password, iv = encrypt_password(session_key, password)
 
         db = get_db()
-
-        # Insert new user into users table
         db.execute(
             'INSERT INTO Accounts (user_id, website_url, encrypted_pw, encryption_iv) VALUES(?, ?, ?, ?)',
             [session['user_id'], web_url, encrypted_password, iv]
         )
-
         db.commit()
         return redirect(url_for('accounts'))
-    
-    # FOR GET REQUEST
-    # Select the accounts associated with the master user
+
     db = get_db()
     accounts = db.execute("SELECT * FROM Accounts WHERE user_id = ?", (session["user_id"],)).fetchall()
 
-    if not accounts:
-        accounts_list = {} # No result from the query
-    else:
-        accounts_list = [dict(account) for account in accounts]
+    # Get list as list of dict
+    accounts_list = [dict(account) for account in accounts]
 
-        # Decrypt the encrypted passwords
-        for account in accounts_list:
-            encrypted_pw = base64.b64decode(account['encrypted_pw'])
-            encryption_iv = base64.b64decode(account['encryption_iv'])
-            salt = session['salt']
+    # Put decrypted password in list of dict
+    for account in accounts_list:
+        encrypted_pw = base64.b64decode(account['encrypted_pw'])
+        encryption_iv = base64.b64decode(account['encryption_iv'])
 
-            decrypted_pw = decrypt_password(session['password'], encrypted_pw, encryption_iv, salt)
+        decrypted_pw = decrypt_password(session_key, encrypted_pw, encryption_iv)
+        account['decrypted_pw'] = decrypted_pw
+        del account['encrypted_pw']
 
-            # Replace encrypted_pw key with decrypted_pw in accounts list
-            account['decrypted_pw'] = decrypted_pw
-            del account['encrypted_pw']
-    
-    # Render the accounts page.
     return render_template('accounts.html', accounts_list=accounts_list)
 
 @app.route('/logout', methods=['POST'])
@@ -238,6 +216,7 @@ def logout():
 
 @app.route('/deleteaccount/<int:account_id>', methods=['POST'])
 def deleteaccount(account_id):
+    # Go to login page cannot delete account
     if 'user_id' not in session:
         return redirect(url_for('login'))
     

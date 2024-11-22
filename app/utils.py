@@ -30,26 +30,24 @@ def check_password_strength(password):
     else:
         return {"strength_score": strength_score, "feedback": ["Password is strong!"]} 
     
-# Key Derivation Function
-def derive_key(master_password, salt):
+# Derive session key from password and salt
+def derive_session_key(master_password, salt):
     kdf = PBKDF2HMAC(
-        algorithm = SHA256(),
-        length = 32, #AES-256 requires 32 byte key
-        salt = salt,
+        algorithm=SHA256(),
+        length=32,  # AES-256 requires 32-byte keys
+        salt=salt,
         iterations=100000,
         backend=default_backend()
     )
     return kdf.derive(master_password.encode())
 
-# Function to encrypt password
-def encrypt_password(master_password, salt, account_password):
-    key = derive_key(master_password, salt)
 
+def encrypt_password(session_key, account_password):
     # Generate a random IV
     iv = os.urandom(16)
 
     # Encrypt the password
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+    cipher = Cipher(algorithms.AES(session_key), modes.CBC(iv), backend=default_backend())
     encryptor = cipher.encryptor()
 
     # Pad the password to match AES block size
@@ -63,14 +61,9 @@ def encrypt_password(master_password, salt, account_password):
         base64.b64encode(iv).decode()
     )
 
-# Function to decrypt password
-def decrypt_password(master_password, encrypted_password, iv, salt):
-
-    # Derive the key
-    key = derive_key(master_password, salt)
-
+def decrypt_password(session_key, encrypted_password, iv):
     # Decrypt the password
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+    cipher = Cipher(algorithms.AES(session_key), modes.CBC(iv), backend=default_backend())
     decryptor = cipher.decryptor()
 
     # Remove padding
