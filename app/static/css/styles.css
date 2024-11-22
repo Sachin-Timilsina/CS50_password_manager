@@ -1,4 +1,4 @@
-/* Overall Styling Tweaks */
+/* Overall Body Style */
 body {
     background-color: #f8f9fa; /* Light background color */
 }
@@ -35,9 +35,7 @@ footer {
     background-color: #343a40;
 }
 
-/* Forms Styles */
-
-/* Card Styles */
+/* Forms Styles & Card Styles */
 .card {
     border-radius: 15px; /* Slightly larger border radius */
     border: none;

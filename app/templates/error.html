@@ -4,6 +4,7 @@
 
 {% block content %}
 <div class="container text-center my-5">
+    <!-- Error page image is AI Generated!-->
     <img src="{{ url_for('static', filename='error_image.jpg') }}" alt="Error AI Generate Image" class="img-fluid" style="max-width: 300px; margin-bottom: 20px;">
     <h1 class="display-4 text-danger">Oops! Error {{ error_code }}</h1>
     <p class="lead text-muted mb-4">{{ error_message }}</p>

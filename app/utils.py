@@ -7,7 +7,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 
-# Validate the password for sign up for master password
+# Validate the password during sign up for master password
 def check_password_strength(password):
     stats = PasswordStats(password)
 
@@ -29,7 +29,8 @@ def check_password_strength(password):
         return {"strength_score": strength_score, "feedback": feedback}
     else:
         return {"strength_score": strength_score, "feedback": ["Password is strong!"]} 
-    
+
+# HELP from AI on the idea of using session_key to encrypt and decrypt passwords. 
 # Derive session key from password and salt
 def derive_session_key(master_password, salt):
     kdf = PBKDF2HMAC(

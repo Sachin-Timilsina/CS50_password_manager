@@ -2,6 +2,7 @@
 function toggleConfirmPassword() {
     var confirmPasswordField = document.getElementById("confirm_password");
     var confirmEyeIcon = document.getElementById("confirm-eye-icon");
+    // Toggle visibility by changing icons and field type between password and text
     if (confirmPasswordField.type === "password") {
         confirmPasswordField.type = "text";
         confirmEyeIcon.classList.remove("bi-eye");
@@ -33,12 +34,12 @@ function goBack() {
     window.history.back();
 }
 
-// AJAX & JQuery to check password real-time 
+// AJAX & JQuery to check password real-time on signup page ( Small HELP FROM AI!)
 $(document).ready(function () {
     // Event listener for password field
     $('#password').on('input', function () {
-        var password = $(this).val();
-
+        var password = $(this).val(); // Get password from the input field
+        // Sending asynchronous request for validation
         $.ajax({
             type: 'POST',
             url: '/check_password_strength',  // URL Flask endpoint

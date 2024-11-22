@@ -185,6 +185,7 @@ def accounts():
         encrypted_password, iv = encrypt_password(session_key, password)
 
         db = get_db()
+        # Insert accounts data such as user_id, web url, encrypted password and iv to accounts table
         db.execute(
             'INSERT INTO Accounts (user_id, website_url, encrypted_pw, encryption_iv) VALUES(?, ?, ?, ?)',
             [session['user_id'], web_url, encrypted_password, iv]
@@ -193,6 +194,8 @@ def accounts():
         return redirect(url_for('accounts'))
 
     db = get_db()
+
+    # Get the data from accounts table related to the current user of password manager.
     accounts = db.execute("SELECT * FROM Accounts WHERE user_id = ?", (session["user_id"],)).fetchall()
 
     # Get list as list of dict
@@ -207,6 +210,7 @@ def accounts():
         account['decrypted_pw'] = decrypted_pw
         del account['encrypted_pw']
 
+    # Render accounts.html with decrypted passwords and web url
     return render_template('accounts.html', accounts_list=accounts_list)
 
 @app.route('/logout', methods=['POST'])

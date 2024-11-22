@@ -1,3 +1,4 @@
+-- Create users table if already not existing
 CREATE TABLE IF NOT EXISTS Users (
     user_id INTEGER PRIMARY KEY, 
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -5,6 +6,7 @@ CREATE TABLE IF NOT EXISTS Users (
     salt VARCHAR(255) NOT NULL
 );
 
+-- Create accounts table if already not existing
 CREATE TABLE IF NOT EXISTS Accounts (
     account_id INTEGER PRIMARY KEY,
     user_id INTEGER,

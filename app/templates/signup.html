@@ -5,8 +5,11 @@
 {% block content %}
 <div class="row justify-content-center my-5">
     <div class="col-md-6 col-lg-5">
+
+        <!-- Card for signup page-->
         <div class="card shadow-sm">
             <div class="card-body">
+                
                 <h2 class="text-center mb-3">Create an Account</h2>
                 <p class="text-end"><a href="{{ url_for('login') }}">or Log In</a></p>
                 <form method="POST" action="{{ url_for('signup') }}">
