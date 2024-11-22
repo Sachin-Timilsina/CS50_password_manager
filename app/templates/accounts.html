@@ -43,20 +43,40 @@
                     <tr>
                         <th>Website URL</th>
                         <th>Password</th>
-                        <th>Actions</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Rows will be dynamically added here -->
+                    <!-- Check if accounts list is empty -->
+                    {% if accounts_list %}
+                        <!-- Loop through the accounts and display them in rows -->
+                        {% for account in accounts_list %}
+                            <tr>
+                                <td>{{ account['website_url'] }}</td>
+                                <td>{{ account['decrypted_pw'] }}</td>
+                                <td>
+                                    <!-- Delete Button for each account -->
+                                    <form action="{{ url_for('deleteaccount', account_id=account['account_id']) }}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Display a message if no accounts are found -->
+                        <tr>
+                            <td colspan="3" class="text-center">No accounts found</td>
+                        </tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- JavaScript for generating password, toggling visibility, and adding rows -->
+<!-- js for generating password-->
 <script>
-    // Generate Random Password
+    // generate random passwd
     document.getElementById('generate-password').addEventListener('click', function() {
         const password = generateRandomPassword();
         document.getElementById('password').value = password;

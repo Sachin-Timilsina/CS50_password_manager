@@ -204,14 +204,50 @@ def accounts():
         )
 
         db.commit()
-        return render_template('accounts.html')
+        return redirect(url_for('accounts'))
+    
+    # FOR GET REQUEST
+    # Select the accounts associated with the master user
+    db = get_db()
+    accounts = db.execute("SELECT * FROM Accounts WHERE user_id = ?", (session["user_id"],)).fetchall()
+
+    if not accounts:
+        accounts_list = {} # No result from the query
+    else:
+        accounts_list = [dict(account) for account in accounts]
+
+        # Decrypt the encrypted passwords
+        for account in accounts_list:
+            encrypted_pw = base64.b64decode(account['encrypted_pw'])
+            encryption_iv = base64.b64decode(account['encryption_iv'])
+            salt = session['salt']
+
+            decrypted_pw = decrypt_password(session['password'], encrypted_pw, encryption_iv, salt)
+
+            # Replace encrypted_pw key with decrypted_pw in accounts list
+            account['decrypted_pw'] = decrypted_pw
+            del account['encrypted_pw']
+    
     # Render the accounts page.
-    return render_template('accounts.html')
+    return render_template('accounts.html', accounts_list=accounts_list)
 
 @app.route('/logout', methods=['POST'])
 def logout():
     session.clear()  # Clear the session
     return redirect(url_for('login'))  # Redirect to login page
+
+@app.route('/deleteaccount/<int:account_id>', methods=['POST'])
+def deleteaccount(account_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    db = get_db()
+
+    # Delete the related account from accounts
+    db.execute('DELETE FROM Accounts WHERE account_id = ? AND user_id = ?', (account_id, session['user_id']))
+    db.commit()
+
+    return redirect(url_for('accounts'))
 
 # Master password strength checking
 @app.route('/check_password_strength', methods=['POST'])
