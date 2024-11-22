@@ -1,18 +1,31 @@
 {% extends "base.html" %}
 
 {% block content %}
+<!-- Logout Button at the top left -->
+<div class="container mt-3">
+    <div class="d-flex justify-content-end">
+        <form action="{{ url_for('logout') }}" method="post">
+            <button type="submit" class="btn btn-danger">Logout</button>
+        </form>
+    </div>
+</div>
+
 <div class="container mt-4">
     <!-- Form Section -->
     <div class="row mb-4">
         <div class="col-md-6 offset-md-3">
-            <form id="password-form">
-                <div class="mb-3">
-                    <label for="website-url" class="form-label">Website URL</label>
-                    <input type="url" class="form-control" id="website-url" required>
+            <form action="{{ url_for('accounts') }}" method="post" id="password-form">
+                <div class="form-floating mb-3">
+                    <input type="url" class="form-control" id="website-url" name="website-url" placeholder="Website URL" required>
+                    <label for="website-url">Website URL</label>
                 </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" required>
+                <div class="form-floating mb-3 position-relative">
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                    <label for="password">Password</label>
+                    <!-- Password Toggle Button -->
+                    <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-50 translate-middle-y" id="toggle-password" onclick="togglePassword()">
+                        <i class="bi bi-eye" id="eye-icon"></i>
+                    </button>
                 </div>
                 <div class="mb-3">
                     <button type="button" class="btn btn-secondary" id="generate-password">Generate Password</button>
@@ -41,69 +54,12 @@
     </div>
 </div>
 
-<!-- JavaScript for generating password and toggling visibility -->
+<!-- JavaScript for generating password, toggling visibility, and adding rows -->
 <script>
+    // Generate Random Password
     document.getElementById('generate-password').addEventListener('click', function() {
         const password = generateRandomPassword();
         document.getElementById('password').value = password;
     });
-
-    document.getElementById('password-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-
-        const websiteUrl = document.getElementById('website-url').value;
-        const password = document.getElementById('password').value;
-
-        // Add new row to the table
-        const table = document.getElementById('password-table').getElementsByTagName('tbody')[0];
-        const newRow = table.insertRow();
-
-        const websiteCell = newRow.insertCell(0);
-        websiteCell.textContent = websiteUrl;
-
-        const passwordCell = newRow.insertCell(1);
-        const passwordText = document.createElement('span');
-        passwordText.textContent = password;
-        passwordText.classList.add('password-text');
-        passwordCell.appendChild(passwordText);
-
-        // Add visibility toggle button
-        const visibilityButton = document.createElement('button');
-        visibilityButton.classList.add('btn', 'btn-info', 'btn-sm');
-        visibilityButton.textContent = 'Toggle Visibility';
-        visibilityButton.onclick = function() {
-            if (passwordText.style.display === 'none') {
-                passwordText.style.display = 'inline';
-            } else {
-                passwordText.style.display = 'none';
-            }
-        };
-        passwordCell.appendChild(visibilityButton);
-
-        // Add delete button
-        const deleteButtonCell = newRow.insertCell(2);
-        const deleteButton = document.createElement('button');
-        deleteButton.classList.add('btn', 'btn-danger', 'btn-sm');
-        deleteButton.textContent = 'Delete';
-        deleteButton.onclick = function() {
-            newRow.remove();
-        };
-        deleteButtonCell.appendChild(deleteButton);
-
-        // Clear the form
-        document.getElementById('website-url').value = '';
-        document.getElementById('password').value = '';
-    });
-
-    function generateRandomPassword() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
-        let password = '';
-        for (let i = 0; i < 12; i++) {
-            const randomIndex = Math.floor(Math.random() * chars.length);
-            password += chars[randomIndex];
-        }
-        return password;
-    }
 </script>
-
 {% endblock %}

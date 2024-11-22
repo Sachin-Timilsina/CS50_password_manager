@@ -4,7 +4,7 @@ import bcrypt
 import base64
 import os
 from flask import Flask, g, jsonify, render_template, request, redirect, url_for, session
-from utils import check_password_strength
+from utils import check_password_strength, encrypt_password, decrypt_password
 from dotenv import load_dotenv
 
 load_dotenv() # take env variables from .env
@@ -62,6 +62,9 @@ def home():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    # If logged in go to accounts page
+    if 'user_id' in session:
+        return redirect(url_for('accounts'))
 
     if request.method == 'POST':
         # Get user email, password, confirm_password
@@ -123,16 +126,16 @@ def signup():
 
         # After Successfully signing up go to log in page
         return redirect(url_for('login'))
-
-    # If logged in go to accounts page
-    if 'user_id' in session:
-        return redirect(url_for('accounts'))
     
     # Handle Get Request
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # If logged in go to accounts page
+    if 'user_id' in session:
+        return redirect(url_for('accounts'))
+    
     if request.method == 'POST':
         # Get user email, password
         email = request.form['email']
@@ -171,24 +174,44 @@ def login():
         session['user_id'] = user['user_id']
         session['email'] = user['email']
         session['password'] = password # NOT A GOOD PRACTICE BUT let's go with it! Don't punish me cyber security gods
+        session['salt'] = salt # ALSO NOT A GOOD PRACTICE !
 
-        return redirect(url_for('accounts.html'))
-    
-    # If logged in go to accounts page
-    if 'user_id' in session:
         return redirect(url_for('accounts'))
 
     return render_template('login.html')
 
 @app.route('/accounts', methods=['POST', 'GET'])
 def accounts():
-    if request.method == 'POST':
-        pass
     # Go back to login if not logged in
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        # Get the user inputted web url and password
+        web_url = request.form['website-url']
+        password = request.form['password']
+
+        # Get encrypted password and IV
+        encrypted_password, iv = encrypt_password(session["password"], session["salt"], password)
+        print(encrypted_password, iv)
+
+        db = get_db()
+
+        # Insert new user into users table
+        db.execute(
+            'INSERT INTO Accounts (user_id, website_url, encrypted_pw, encryption_iv) VALUES(?, ?, ?, ?)',
+            [session['user_id'], web_url, encrypted_password, iv]
+        )
+
+        db.commit()
+        return render_template('accounts.html')
     # Render the accounts page.
     return render_template('accounts.html')
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()  # Clear the session
+    return redirect(url_for('login'))  # Redirect to login page
 
 # Master password strength checking
 @app.route('/check_password_strength', methods=['POST'])
