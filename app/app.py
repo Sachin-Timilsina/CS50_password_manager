@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv() # take env variables from .env
 
 
-#sachin is bhalu
+#sachin is the best ai/ml engineer
 app = Flask(__name__)
 
 # Set secret key for app.
